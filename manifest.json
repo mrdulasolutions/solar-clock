@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.mrdulasolutions.solar-clock",
+  "name": "Solar Clock",
+  "version": "1.0.0",
+  "author": "MR Dula Solutions",
+  "license": "MIT",
+  "description": "A bar clock that counts from sunrise to midday, down to sunset, then through midnight back to sunrise.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Solar Clock",
+    "description": "Hours since sunrise, then until sunset; after dark, since sunset, then until sunrise.",
+    "category": "Time",
+    "allowMultiple": false,
+    "defaultSection": "center"
+  }
+}
