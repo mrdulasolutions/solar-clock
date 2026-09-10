@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Producer-side HTTPS GET for the solar-clock widget.
+# Bounds the body in this child (curl --max-filesize plus head -c MAX+1) and
+# exits non-zero on overflow so omarchy-shell never collects an unbounded stream.
+set -euo pipefail
+
+MAX=262144
+url="${1-}"
+case "$url" in
+  https://*) ;;
+  *) exit 1 ;;
+esac
+
+out="$(
+  curl -fsSL --proto '=https' --max-time 6 --max-filesize "$MAX" --max-redirs 2 -- "$url" \
+    | head -c $((MAX + 1))
+)" || exit 1
+
+LC_ALL=C
+if [ "${#out}" -gt "$MAX" ]; then
+  exit 1
+fi
+
+printf '%s' "$out"

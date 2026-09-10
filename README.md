@@ -87,8 +87,10 @@ It does not change weather location, the system clock, or other Omarchy settings
 
 Ships with Omarchy / the network:
 
-- `curl` — Open-Meteo sunrise/sunset and wttr.in location
+- `curl` and `bash` — Open-Meteo sunrise/sunset and wttr.in location
 - Omarchy weather location file, when present
+
+HTTPS bodies are capped at 256 KiB in the `fetch-https` child (`curl --max-filesize` plus `head -c`). Overflow is discarded; the shell never collects an unbounded stream.
 
 No extra packages, sudoers rules, or install hooks.
 
@@ -108,6 +110,7 @@ omarchy-shell io.github.mrdulasolutions.solar-clock toggle
 | `BarWidget.qml` | Bar label |
 | `Panel.qml` | Detail popup |
 | `Model.js` | Location parsing and sun-phase clock |
+| `fetch-https` | Bounded HTTPS GET (256 KiB, reject overflow) |
 
 ## License
 

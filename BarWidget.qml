@@ -53,16 +53,28 @@ BarWidget {
     root.solar = Model.solarState(root.displayDate, root.sunDays, root.sunSource)
   }
 
+  function pluginFile(name) {
+    var text = String(Qt.resolvedUrl(name))
+    if (text.indexOf("file://") === 0)
+      return decodeURIComponent(text.slice(7))
+    return text
+  }
+
+  function startHttps(proc, url) {
+    if (!proc || proc.running) return
+    var command = Model.httpsGetCommand(root.pluginFile("fetch-https"), url)
+    if (!command.length) return
+    proc.command = command
+    proc.running = true
+  }
+
   function fetchSunTimes() {
-    if (!root.hasLocation || sunProc.running) return
-    sunProc.command = ["curl", "-fsS", "--max-time", "6", Model.openMeteoSunUrl(root.latitude, root.longitude)]
-    sunProc.running = true
+    if (!root.hasLocation) return
+    root.startHttps(sunProc, Model.openMeteoSunUrl(root.latitude, root.longitude))
   }
 
   function fetchWeatherLocation() {
-    if (wttrProc.running) return
-    wttrProc.command = ["curl", "-fsS", "--max-time", "6", Model.wttrLocationUrl(root.weatherLocation)]
-    wttrProc.running = true
+    root.startHttps(wttrProc, Model.wttrLocationUrl(root.weatherLocation))
   }
 
   function refresh() {
@@ -147,8 +159,10 @@ BarWidget {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        var loc = Model.parseWttrLocation(text)
-        var days = Model.parseWttrSunDays(text)
+        var body = Model.acceptHttpsBody(text)
+        if (!body) return
+        var loc = Model.parseWttrLocation(body)
+        var days = Model.parseWttrSunDays(body)
         if (days.length && (!root.sunDays || !root.sunDays.length || root.sunSource !== "Open-Meteo")) {
           root.sunDays = days
           root.sunSource = "wttr.in"
@@ -167,7 +181,9 @@ BarWidget {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        var parsed = Model.parseOpenMeteoSunDays(text)
+        var body = Model.acceptHttpsBody(text)
+        if (!body) return
+        var parsed = Model.parseOpenMeteoSunDays(body)
         if (parsed.days && parsed.days.length) {
           root.sunDays = parsed.days
           root.sunSource = "Open-Meteo"

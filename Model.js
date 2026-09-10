@@ -9,6 +9,24 @@
 // wttr.in auto-detect the weather widget uses). Sunrise and sunset come
 // from Open-Meteo, the same forecast API the weather panel already hits.
 // Midday and midnight are the midpoints of those published times.
+//
+// HTTPS bodies are fetched by ./fetch-https, which caps the stream at
+// HTTPS_MAX_BYTES in the child process and refuses overflow.
+
+var HTTPS_MAX_BYTES = 262144
+
+function httpsGetCommand(scriptPath, url) {
+  var script = String(scriptPath || "")
+  var href = String(url || "")
+  if (!script || href.indexOf("https://") !== 0) return []
+  return ["bash", script, href]
+}
+
+function acceptHttpsBody(raw) {
+  var text = String(raw || "")
+  if (!text || text.length > HTTPS_MAX_BYTES) return ""
+  return text
+}
 
 function isValidDate(date) {
   return date instanceof Date && !isNaN(date.getTime())
