@@ -24,6 +24,15 @@ Panel {
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
   readonly property color dim: Qt.darker(contentForeground, 1.4)
 
+  readonly property var arc: Model.arcState(solar)
+  readonly property string activeEvent: Model.activeEvent(solar && solar.phase ? solar.phase : "")
+  readonly property var beatRows: [
+    { key: "sunrise", name: "Sunrise", value: rowTime(solar.sunrise) },
+    { key: "midday", name: "Midday", value: rowTime(solar.midday) },
+    { key: "sunset", name: "Sunset", value: rowTime(solar.sunset) },
+    { key: "midnight", name: "Midnight", value: rowTime(solar.midnight) }
+  ]
+
   readonly property string locationLabel: {
     if (root.locationName) return root.locationName
     var lat = Number(root.locationLatitude)
@@ -92,7 +101,7 @@ Panel {
     open: root.opened
     centerOnBar: true
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(380))
+    contentWidth: panel.fittedContentWidth(Style.space(400))
     contentHeight: panel.fittedContentHeight(column.implicitHeight)
 
     PanelKeyCatcher {
@@ -134,38 +143,119 @@ Panel {
           wrapMode: Text.WordWrap
         }
 
-        Column {
+        DayArc {
+          width: parent.width
+          visible: root.arc.ready
+          dayProgress: root.arc.day
+          nightProgress: root.arc.night
+          daytime: root.arc.daytime
+          ready: root.arc.ready
+          ink: root.contentForeground
+        }
+
+        Row {
           width: parent.width
           spacing: Style.space(8)
+          visible: root.arc.ready
 
           Repeater {
             model: [
-              { name: "Sunrise", value: root.rowTime(root.solar.sunrise) },
-              { name: "Midday", value: root.rowTime(root.solar.midday) },
-              { name: "Sunset", value: root.rowTime(root.solar.sunset) },
-              { name: "Midnight", value: root.rowTime(root.solar.midnight) }
+              { name: "Daylight", value: root.arc.daylight },
+              { name: "Night", value: root.arc.nightLength }
             ]
 
-            Row {
+            BorderSurface {
               required property var modelData
-              width: parent.width
-              spacing: Style.space(10)
+              width: (parent.width - Style.space(8)) / 2
+              implicitHeight: labelColumn.implicitHeight + Style.space(16)
+              radius: Style.cornerRadius
+              color: Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, 0.05)
+              borderSpec: Border.controlSpec("normal", root.contentForeground, Color.accent)
 
-              Text {
-                width: Style.space(90)
-                text: modelData.name.toUpperCase()
-                color: root.dim
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
-                font.letterSpacing: 1.2
+              Column {
+                id: labelColumn
+                anchors.centerIn: parent
+                width: parent.width - Style.space(16)
+                spacing: Style.space(2)
+
+                Text {
+                  width: parent.width
+                  horizontalAlignment: Text.AlignHCenter
+                  text: modelData.name.toUpperCase()
+                  color: root.dim
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.caption
+                  font.bold: true
+                  font.letterSpacing: 1.2
+                }
+
+                Text {
+                  width: parent.width
+                  horizontalAlignment: Text.AlignHCenter
+                  text: modelData.value
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.body
+                  font.bold: true
+                }
               }
+            }
+          }
+        }
 
-              Text {
-                text: modelData.value
-                color: root.contentForeground
-                font.family: root.contentFontFamily
-                font.pixelSize: Style.font.body
+        PanelSeparator { foreground: root.contentForeground }
+
+        PanelSectionHeader {
+          text: "TODAY"
+          foreground: root.contentForeground
+          fontFamily: root.contentFontFamily
+        }
+
+        Grid {
+          width: parent.width
+          columns: 2
+          columnSpacing: Style.space(8)
+          rowSpacing: Style.space(8)
+
+          Repeater {
+            model: root.beatRows
+
+            BorderSurface {
+              required property var modelData
+              readonly property bool on: modelData.key === root.activeEvent
+              width: (parent.width - Style.space(8)) / 2
+              implicitHeight: beatColumn.implicitHeight + Style.space(16)
+              radius: Style.cornerRadius
+              color: Qt.rgba(root.contentForeground.r, root.contentForeground.g, root.contentForeground.b, on ? 0.12 : 0.04)
+              borderSpec: Border.controlSpec(on ? "selected" : "normal", root.contentForeground, Color.accent)
+
+              Column {
+                id: beatColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: Style.space(12)
+                anchors.rightMargin: Style.space(12)
+                spacing: Style.space(2)
+
+                Text {
+                  width: parent.width
+                  text: modelData.name.toUpperCase()
+                  color: root.dim
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.caption
+                  font.bold: true
+                  font.letterSpacing: 1.2
+                }
+
+                Text {
+                  width: parent.width
+                  text: modelData.value
+                  color: root.contentForeground
+                  font.family: root.contentFontFamily
+                  font.pixelSize: Style.font.body
+                  font.bold: on
+                }
               }
             }
           }

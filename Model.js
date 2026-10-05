@@ -342,6 +342,56 @@ function solarState(now, days, source) {
   }
 }
 
+function spanLabel(ms) {
+  if (!(ms > 0)) return "—"
+  var minutes = Math.round(ms / 60000)
+  var hours = Math.floor(minutes / 60)
+  var mins = minutes % 60
+  if (hours <= 0) return mins + "m"
+  return hours + "h " + pad2(mins) + "m"
+}
+
+function clamp01(value) {
+  if (!(value > 0)) return 0
+  if (value > 1) return 1
+  return value
+}
+
+// Where the marker sits on the day arc (sunrise → sunset) and the night arc
+// (sunset → next sunrise, or last sunset → this sunrise before dawn).
+function arcState(solar) {
+  var now = solar && solar.wallClock
+  var sunrise = solar && solar.sunrise
+  var sunset = solar && solar.sunset
+  var empty = { ready: false, daytime: false, day: 0, night: 0, daylight: "—", nightLength: "—" }
+  if (!isValidDate(now) || !isValidDate(sunrise) || !isValidDate(sunset) || (solar && solar.polar))
+    return empty
+
+  var dayMs = sunset.getTime() - sunrise.getTime()
+  var day = dayMs > 0 ? (now.getTime() - sunrise.getTime()) / dayMs : 0
+  var nightStart = now < sunrise ? solar.prevSunset : sunset
+  var nightEnd = now < sunrise ? sunrise : solar.nextSunrise
+  var nightMs = isValidDate(nightStart) && isValidDate(nightEnd) ? nightEnd.getTime() - nightStart.getTime() : 0
+  var night = nightMs > 0 ? (now.getTime() - nightStart.getTime()) / nightMs : 0
+
+  return {
+    ready: true,
+    daytime: solar.daytime === true,
+    day: clamp01(day),
+    night: clamp01(night),
+    daylight: spanLabel(dayMs),
+    nightLength: spanLabel(nightMs)
+  }
+}
+
+function activeEvent(phase) {
+  if (phase === "sunrise" || phase === "since-sunrise" || phase === "until-sunrise") return "sunrise"
+  if (phase === "midday") return "midday"
+  if (phase === "sunset" || phase === "since-sunset" || phase === "until-sunset") return "sunset"
+  if (phase === "midnight") return "midnight"
+  return ""
+}
+
 function verticalLines(label) {
   var text = String(label || "")
   if (text.indexOf(":") !== -1) return text.split(":")

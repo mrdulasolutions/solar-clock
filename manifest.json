@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.mrdulasolutions.solar-clock",
   "name": "Solar Clock",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "MR Dula Solutions",
   "license": "MIT",
   "description": "A bar clock that counts from sunrise to midday, down to sunset, then through midnight back to sunrise.",

@@ -15,7 +15,7 @@ It sits next to Omarchy's normal clock. It does not replace it.
 - Shows `sunrise`, `mid day`, `sunset`, and `midnight` on those minutes
 - Uses the same location as the Omarchy weather widget
 - Sunrise and sunset come from Open-Meteo (wttr.in astronomy as fallback)
-- Click the label for today's sun times, wall clock, and location
+- Click the label for a sun-path diagram, daylight and night lengths, and today's four beats
 - Follows a location you set in the weather panel
 
 ## Install
