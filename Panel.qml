@@ -40,7 +40,11 @@ Panel {
   }
 
   function close() {
-    setCenterHoverRevealSuppressed(false)
+    // Hide even if the hover flag cannot be cleared. A throw here used to
+    // leave the panel's click catcher mapped over the desktop.
+    try {
+      setCenterHoverRevealSuppressed(false)
+    } catch (e) {}
     root.controller.hide()
   }
 
@@ -55,9 +59,20 @@ Panel {
     return false
   }
 
+  // PluginBarApi marks centerHoverRevealSuppressed read-only. QML then treats
+  // setCenterHoverRevealSuppressed() as a write of that property, so the
+  // method never runs. The host stores the real callback under
+  // _setCenterHoverRevealSuppressed. Older shells still have a writable property.
   function setCenterHoverRevealSuppressed(value) {
-    if (root.bar && "centerHoverRevealSuppressed" in root.bar)
-      root.bar.centerHoverRevealSuppressed = value
+    var bar = root.bar
+    if (!bar) return
+    var setter = bar._setCenterHoverRevealSuppressed
+    if (typeof setter === "function") {
+      setter(!!value)
+      return
+    }
+    if ("centerHoverRevealSuppressed" in bar)
+      bar.centerHoverRevealSuppressed = !!value
   }
 
   function refresh() {
